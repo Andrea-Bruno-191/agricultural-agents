@@ -1,22 +1,24 @@
 #!/usr/bin/python3
 
+import math
 import numpy as np
 import mesa
-from mesa import Model 
+from mesa import Model
 from mesa.datacollection import DataCollector
-from mesa.discrete_space import OrthogonalMooreGrid 
-from mesa.experimental.continuous_space import ContinuousSpaceAgent 
+from mesa.discrete_space import OrthogonalMooreGrid
+from mesa.experimental.continuous_space import ContinuousSpaceAgent
 
-
-from worker_agent_andrea import current_month, current_year, WorkerStatus, worker, ICE_officer
+from worker_agent_andrea import current_month, current_year, WorkerStatus, Worker
+# from worker_agent_andrea import current_month, current_year, WorkerStatus, worker, ICE_officer
+import worker_agent_andrea
 
 
 class agricultural_model(Model):
     def __init__(
-        self, 
+        self,
         width = 40,
         height = 40,
-        worker_density = 0.7, 
+        worker_density = 0.7,
         ICE_density = 0.05,
         ICE_vision = 5,
         movement=True,
@@ -26,16 +28,16 @@ class agricultural_model(Model):
         super().__init__(seed=seed)
         self.movement = movement
         self.max_iters = max_iters
-        
-        
+
+        self.n_avail = round(width*height*worker_density)
         self.grid = mesa.discrete_space.OrthogonalVonNeumannGrid(
             (width, height), capacity=1, torus=True, random=self.random
         )
 
         model_reporters = {
-            "Documented_count": WorkerStatus.DOCUMENTED.name,
-            "Undocumented_count": WorkerStatus.UNDOCUMENTED.name,
-            "Deported_count": WorkerStatus.DEPORTED.name,
+            "documented": WorkerStatus.DOCUMENTED.name,
+            "undocumented": WorkerStatus.UNDOCUMENTED.name,
+            "deported": WorkerStatus.DEPORTED.name,
         }
 
         agent_reporters = {
@@ -47,36 +49,43 @@ class agricultural_model(Model):
         )
 
         if ICE_density + worker_density > 1:
-            raise ValueError("ICE deinsity + worker desnity must be less than 1")
-        
-        for cell in self.grid.all_cells:
-            new_ICE_officer = ICE_officer(self, 1, 2)
-            klass = self.random.choices(
-                [new_ICE_officer, worker, None],
-                com_weights=[worker_density, worker_density + ICE_density, 1],
-            )[0]
+            raise ValueError("ICE deinsity + worker density must be less than 1")
 
-            if klass == ICE_officer:
-                ICE_officer = ICE_officer(self, vision=ICE_vision)
-                ICE_officer.move_to(cell)
-            elif klass == worker:
-                worker = worker(
-                    self,
-                    wage_threshold = wage_threshold,
-                    wage_constant = wage_constant,
-                )
-                worker.move_to(cell)
+        for cell in self.grid.all_cells:
+            print(f"model_init_iterate_cell: {cell}")
+            # new_ICE_officer = worker_agent_andrea.ICE_officer(self, 1, 2)
+            # new_worker = Worker(self, 3, 17, 15)
+            klass = self.random.choices(
+                [worker_agent_andrea.ICE_officer, Worker, None],
+                cum_weights=[worker_density, worker_density + ICE_density, 1],
+            )[0]
+            print('this_klass:', klass)
+
+            if klass == worker_agent_andrea.ICE_officer:
+                new_ICE_officer = worker_agent_andrea.ICE_officer(self, 1, 2)
+                # new_ICE_officer = worker_agent_andrea.ICE_officer(self, vision=ICE_vision)
+                new_ICE_officer.move_to(cell)
+            elif klass == Worker:
+                new_worker = Worker(self, 3, 17, 15)
+                # new_worker = Worker(
+                #     self,
+                #     wage_threshold = wage_threshold,
+                #     wage_constant = wage_constant,
+                # )
+                new_worker.move_to(cell)
 
         self.running = True
-        self._update_counts()
+        # self._update_counts()
+        print("====================================================")
+        print(self.datacollector)
         self.datacollector.collect(self)
 
         print('agricultural model init')
 
     def step(self):
-
+        print("MODEL: step")
         self.agents.shuffle_do("step")
-        self._udpate_counts()
+        self._update_counts()
         self.datacollector.collect(self)
 
         if self.steps > self.max_iters:
@@ -85,12 +94,11 @@ class agricultural_model(Model):
         current_month = current_month + 1
         if current_month > 12:
             current_month = 1
-            current_year += 1 
+            current_year += 1
         print(current_year, current_month)
 
     def _update_counts(self):
-        "helper functino for counting number of workers"
-        counts = self.agents_by_type[worker].groupby("status").count()
-    
-        for Status in WorkerStatus: 
+        """helper functino for counting number of workers"""
+        counts = self.agents_by_type[Worker].groupby("status").count()
+        for status in WorkerStatus:
             setattr(self, status.name, counts.get(status, 0))

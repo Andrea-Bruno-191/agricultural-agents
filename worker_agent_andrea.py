@@ -2,6 +2,8 @@ import math
 from enum import Enum 
 import mesa
 
+import wage_utils
+
 ##current month is the global date, all agents are put in 
 current_month = 1
 current_year = 2022
@@ -22,24 +24,27 @@ class WorkerStatus(Enum):
     """An immigrant farm worker who will come to the US
     but leave if wages are too low to compensate for
     concerns about immigration crackdown."""
-    
     DOCUMENTED = 1
     UNDOCUMENTED = 2
     DEPORTED = 3
 
-class worker(Agent):
-    def __init__(self, model, fear, wage_threshold, 
-    wage_constant): 
+class Worker(Agent):
+    def __init__(self, model, fear, wage_threshold, wage_baseline):
         """Create a new worker."""
         super().__init__(model)
+        self.model = model
         self.work_needed = BOGUS
         ##function of the time of year, labor demand 
-                            ##increases in summer and fall
-        self.fear = 1 - math.exp(
-            -1 * round(DEPORTED_COUNT / UNDOCUMENTED_COUNT))
-        self.wage = work_needed / (DOCUMENTED_COUNT + UNDOCUMENTED_COUNT)
-    ##function of work needed vs workers available. The wage offered.
-        self.wage_threshold = self.wage_constant * (1 + self.fear)
+        ##increases in summer and fall
+        self.fear = 0
+        self.wage_baseline = wage_baseline
+        self.wage = wage_utils.calc_wage(current_year, current_month, '96099',
+                                         model.n_avail, wage_baseline)
+        # self.fear = 1 - math.exp(
+        #     -1 * round(DEPORTED_COUNT / UNDOCUMENTED_COUNT))
+        # self.wage = work_needed / (DOCUMENTED_COUNT + UNDOCUMENTED_COUNT)
+        ##function of work needed vs workers available. The wage offered.
+        self.wage_threshold = self.wage_baseline * (1 + self.fear)
 
         month = 0 
         work_needed = BOGUS

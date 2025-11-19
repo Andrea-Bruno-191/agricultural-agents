@@ -1,5 +1,7 @@
+import sys
+
 from worker_agent_andrea import (
-    worker, WorkerStatus, ICE_officer
+    Worker, WorkerStatus, ICE_officer
     )
 from farm_labor_model_andrea import agricultural_model
 from mesa.visualization import (
@@ -55,6 +57,7 @@ chart_component = make_plot_component(
 )
 
 agricultural_model = agricultural_model()
+sys.exit(1)
 renderer = SpaceRenderer(agricultural_model, backend="matplotlib")
 renderer.draw_agents(ICE_officer_portrayal)
 renderer.post_process = post_process
