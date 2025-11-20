@@ -1,4 +1,4 @@
-# agent based model for labor shortage
+# agent based model for farm workers and ICE deportations
 
 ## Running
 
@@ -6,8 +6,8 @@ If you have *already* done the initial python setup then you can
 simply run these instructions:
 
 ```sh
-source labor-shortage-venv/bin/activate
-solara run labor_farm_worker_vis.py
+source farm-labor-venv/bin/activate
+solara run farm_labor_app.py
 ```
 
 (Otherwise look below at the section `<Set up your python packages,
@@ -45,8 +45,8 @@ Using the Mesa framework we define various classes.  Start by
 installing needed python s/w:
 ```sh
 sudo apt install python3-venv
-python3 -m venv labor-shortage-venv/
-source labor-shortage-venv/bin/activate
+python3 -m venv farm-labor-venv/
+source farm-labor-venv/bin/activate
 pip3 install mesa solara altair
 pip3 install networkx matplotlib
 ```
