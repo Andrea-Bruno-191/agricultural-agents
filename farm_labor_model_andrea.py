@@ -8,9 +8,19 @@ from mesa.datacollection import DataCollector
 from mesa.discrete_space import OrthogonalMooreGrid
 from mesa.experimental.continuous_space import ContinuousSpaceAgent
 
-from worker_agent_andrea import current_month, current_year, WorkerStatus, Worker
-# from worker_agent_andrea import current_month, current_year, WorkerStatus, worker, ICE_officer
+#from worker_agent_andrea import current_month, current_year, WorkerStatus, Worker, ICE_officer
 import worker_agent_andrea
+
+agri_month2work_needed = {1: 27, 2: 33, 3: 33, 4: 33, 5: 33, 6: 33, 7: 33, 8: 33,
+                          9: 33, 10: 40, 11: 41, 12: 33}
+wage_baseline = 17
+
+def calc_wage(year, month, zip_code, n_workers_avail, wage_baseline, work_needed):
+    """Simplified model of wage, uses the agri_month2work_needed table."""
+    work_needed = agri_month2work_needed[month]
+    wage = wage_baseline * work_needed / n_workers_avail 
+    """how many workers we have? should change the work_needed table to be close ##to number of worker agents typically in model"""
+    return wage
 
 
 class agricultural_model(Model):
@@ -49,21 +59,21 @@ class agricultural_model(Model):
         )
 
         if ICE_density + worker_density > 1:
-            raise ValueError("ICE deinsity + worker density must be less than 1")
+            raise ValueError("ICE density + worker density must be less than 1")
 
         for cell in self.grid.all_cells:
             print(f"model_init_iterate_cell: {cell}")
             # new_ICE_officer = worker_agent_andrea.ICE_officer(self, 1, 2)
             # new_worker = Worker(self, 3, 17, 15)
             klass = self.random.choices(
-                [worker_agent_andrea.ICE_officer, Worker, None],
+                [ICE_officer, Worker, None],
                 cum_weights=[worker_density, worker_density + ICE_density, 1],
             )[0]
             print('this_klass:', klass)
 
-            if klass == worker_agent_andrea.ICE_officer:
-                new_ICE_officer = worker_agent_andrea.ICE_officer(self, 1, 2)
-                # new_ICE_officer = worker_agent_andrea.ICE_officer(self, vision=ICE_vision)
+            if klass == ICE_officer:
+                new_ICE_officer = ICE_officer(self, 1, 2)
+                #new_ICE_officer = worker_agent_andrea.ICE_officer(self, vision=ICE_vision)
                 new_ICE_officer.move_to(cell)
             elif klass == Worker:
                 new_worker = Worker(self, 3, 17, 15)
@@ -75,7 +85,7 @@ class agricultural_model(Model):
                 new_worker.move_to(cell)
 
         self.running = True
-        # self._update_counts()
+        self._update_counts()
         print("====================================================")
         print(self.datacollector)
         self.datacollector.collect(self)
@@ -98,7 +108,9 @@ class agricultural_model(Model):
         print(current_year, current_month)
 
     def _update_counts(self):
-        """helper functino for counting number of workers"""
+        """helper function for counting number of workers"""
+        print('--> bytype:', self.agents_by_type[Worker])
+        print('--> bytype:', dir(self.agents_by_type[Worker]))
         counts = self.agents_by_type[Worker].groupby("status").count()
         for status in WorkerStatus:
             setattr(self, status.name, counts.get(status, 0))

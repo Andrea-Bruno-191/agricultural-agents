@@ -14,20 +14,21 @@ from mesa.visualization.components import AgentPortrayalStyle
 
 ICE_color = "#023098"
 
-worker_colors = {
-    WorkerStatus.DOCUMENTED: "#239093",
+agent_colors = {
+    WorkerStatus.DOCUMENTED: "#4C753B",
     WorkerStatus.UNDOCUMENTED: "#D18049",
     WorkerStatus.DEPORTED: "#110311",
 }
 
-def ICE_officer_portrayal(agent):
+def worker_or_officer_portrayal(agent):
+    print("agent:", agent, agent.unique_id)
     if agent is None:
         return
     
     portrayal = AgentPortrayalStyle(size=200)
 
     if isinstance(agent, Worker):
-        portrayal.update(("color", worker_colors[WorkerStatus]))
+        portrayal.update(("color", agent_colors[agent.status]))
     elif isinstance(agent, ICE_officer):
         portrayal.update(("color", ICE_color))
     
@@ -35,7 +36,7 @@ def ICE_officer_portrayal(agent):
 
 def post_process(ax):
     ax.set_aspect("equal")
-    ax.setxticks([])
+    ax.set_xticks([])
     ax.set_yticks([])
     ax.get_figure().set_size_inches(10, 10)
 
@@ -53,13 +54,12 @@ model_params = {
 }
 
 chart_component = make_plot_component(
-    {status.name.lower(): worker_colors[status] for status in WorkerStatus}
+    {status.name.lower(): agent_colors[status] for status in WorkerStatus}
 )
 
 agricultural_model = agricultural_model()
-sys.exit(1)
 renderer = SpaceRenderer(agricultural_model, backend="matplotlib")
-renderer.draw_agents(ICE_officer_portrayal)
+renderer.draw_agents(worker_or_officer_portrayal)
 renderer.post_process = post_process
 
 page = SolaraViz(
