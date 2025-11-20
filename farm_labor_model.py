@@ -2,6 +2,7 @@
 
 import math
 import numpy as np
+import random
 import mesa
 from mesa import Model
 from mesa.datacollection import DataCollector
@@ -9,20 +10,6 @@ from mesa.discrete_space import OrthogonalMooreGrid
 from mesa.experimental.continuous_space import ContinuousSpaceAgent
 
 from farm_worker_agent import WorkerStatus, Worker, ICE_officer
-
-# import farm_worker_agent
-
-# agri_month2work_needed = {1: 27, 2: 33, 3: 33, 4: 33, 5: 33, 6: 33, 7: 33, 8: 33,
-#                           9: 33, 10: 40, 11: 41, 12: 33}
-# wage_baseline = 17
-
-# def calc_wage(year, month, zip_code, n_workers_avail, wage_baseline, work_needed):
-#     """Simplified model of wage, uses the agri_month2work_needed table."""
-#     work_needed = agri_month2work_needed[month]
-#     wage = wage_baseline * work_needed / n_workers_avail 
-#     """how many workers we have? should change the work_needed table to be close ##to number of worker agents typically in model"""
-#     return wage
-
 
 class agricultural_model(Model):
     def __init__(
@@ -34,7 +21,7 @@ class agricultural_model(Model):
         ICE_vision = 5,
         movement=True,
         seed=None,
-        max_iters=1000
+        max_iters=100
     ):
         super().__init__(seed=seed)
         # current month is the global date, all agents are put in 
@@ -71,7 +58,7 @@ class agricultural_model(Model):
             # new_worker = Worker(self, 3, 17, 15)
             klass = self.random.choices(
                 [ICE_officer, Worker, None],
-                cum_weights=[worker_density, worker_density + ICE_density, 1],
+                cum_weights=[ICE_density, worker_density + ICE_density, 1],
             )[0]
             print('this_klass:', klass)
 
@@ -80,7 +67,7 @@ class agricultural_model(Model):
                 #new_ICE_officer = farm_worker_agent.ICE_officer(self, vision=ICE_vision)
                 new_ICE_officer.move_to(cell)
             elif klass == Worker:
-                new_worker = Worker(self, 3, 17, 15)
+                new_worker = Worker(self, 3, 17, 15, random.randint(0, 100))
                 # new_worker = Worker(
                 #     self,
                 #     wage_threshold = wage_threshold,

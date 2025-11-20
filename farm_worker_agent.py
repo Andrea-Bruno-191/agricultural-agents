@@ -1,6 +1,7 @@
 import math
 from enum import Enum 
 import mesa
+import random
 
 BOGUS = -1
 
@@ -45,7 +46,7 @@ class AgriModelAgent(mesa.discrete_space.CellAgent):
             self.move_to(new_pos)
 
 class Worker(AgriModelAgent):
-    def __init__(self, model, fear, wage_threshold, wage_baseline):
+    def __init__(self, model, fear, wage_threshold, wage_baseline, doc_tag):
         """Create a new worker.
         Self.wage is the exogenous wage offered by firms, dependent
         on the amount of work needed and the number of workers available. 
@@ -54,8 +55,9 @@ class Worker(AgriModelAgent):
         Wage_threshold is the wage the worker expects, contingent
         on their fear of being deported. 
         """
+        self.doc_tag = random.randint(0, 100)
         super().__init__(model)
-        self.status = WorkerStatus.DOCUMENTED
+        self.status = WorkerStatus.DOCUMENTED if doc_tag < 60 else WorkerStatus.UNDOCUMENTED
         self.model = model
         # self.labor_needed = labor_needed
         ##function of the time of year, labor demand 
