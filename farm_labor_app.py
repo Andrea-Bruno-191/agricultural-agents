@@ -13,18 +13,18 @@ from mesa.visualization import (
 )
 from mesa.visualization.components import AgentPortrayalStyle
 
-ICE_color = "#023098"
-wage_color = "#A8D456"
-wage = 17 
+# ICE_color = "#023098"
+ICE_color = "red"
 
 agent_colors = {
     WorkerStatus.DOCUMENTED: "#4C753B",
     WorkerStatus.UNDOCUMENTED: "#D18049",
     WorkerStatus.DEPORTED: "#110311",
+    WorkerStatus.WAGE: "gold",
 }
 
 def worker_or_officer_portrayal(agent):
-    print("agent:", agent, agent.unique_id, wage)
+    # print("agent:", agent, agent.unique_id, wage)
     if agent is None:
         return
     
@@ -35,7 +35,7 @@ def worker_or_officer_portrayal(agent):
     elif isinstance(agent, ICE_officer):
         portrayal.update(("color", ICE_color))
     
-    portrayal.update(("color", wage))
+    # portrayal.update(("color", wage))
 
     return portrayal
 
@@ -51,11 +51,11 @@ model_params = {
         "value": 42,
         "label": "Random Seed",
     },
-    "height": 40,
-    "width": 40,
+    "height": 20,
+    "width": 20,
     "worker_density": Slider("Initial Worker Density", 0.7, 0.1, 0.9, 0.1),
     "ICE_density": Slider("Initial ICE Density", 0.04, 0.0, 0.1, 0.01),
-    "ICE_vision" : Slider("ICE Vison", 7, 1, 10, 1),
+    "ICE_vision" : Slider("ICE Vison", 3, 1, 10, 1),
 }
 
 chart_component = make_plot_component(
