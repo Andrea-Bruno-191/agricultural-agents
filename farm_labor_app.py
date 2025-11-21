@@ -3,6 +3,7 @@ import sys
 from farm_worker_agent import (
     Worker, WorkerStatus, ICE_officer
     )
+from farm_wage_utils import calc_wage
 from farm_labor_model import agricultural_model
 from mesa.visualization import (
     Slider,
@@ -13,6 +14,8 @@ from mesa.visualization import (
 from mesa.visualization.components import AgentPortrayalStyle
 
 ICE_color = "#023098"
+wage_color = "#A8D456"
+wage = 17 
 
 agent_colors = {
     WorkerStatus.DOCUMENTED: "#4C753B",
@@ -21,7 +24,7 @@ agent_colors = {
 }
 
 def worker_or_officer_portrayal(agent):
-    print("agent:", agent, agent.unique_id)
+    print("agent:", agent, agent.unique_id, wage)
     if agent is None:
         return
     
@@ -32,6 +35,8 @@ def worker_or_officer_portrayal(agent):
     elif isinstance(agent, ICE_officer):
         portrayal.update(("color", ICE_color))
     
+    portrayal.update(("color", wage))
+
     return portrayal
 
 def post_process(ax):

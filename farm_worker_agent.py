@@ -7,6 +7,8 @@ BOGUS = -1
 
 from farm_wage_utils import calc_wage
 
+visa_access = random.randint(0, 10)
+
 class WorkerStatus(Enum):
     """An immigrant farm worker who will come to the US
     but leave if wages are too low to compensate for
@@ -32,6 +34,16 @@ def calc_n_undocumented(model):
         if agent.status == WorkerStatus.UNDOCUMENTED:
             n_undocumented += 1
     return n_undocumented
+
+def calc_n_workers(model):
+    n_workers = 0 
+    print(len(model.agents_by_type[Worker]))
+    for agent in model.agents_by_type[Worker]:
+        print("THIS_AGENT:", agent.unique_id, agent.status)
+        if agent.status != WorkerStatus.DEPORTED:
+            n_workers += 1
+        return n_workers
+    
 
 
 class AgriModelAgent(mesa.discrete_space.CellAgent):
@@ -94,6 +106,26 @@ class Worker(AgriModelAgent):
             self.fear = self.fear * (.8 + n_deported / n_undocumented)
         # Should fluctuate but generally increase
         self.wage_threshold = self.wage_threshold * (self.fear)
+
+    def handle_immigration(self, n_employed, n_jobs_offered,
+                           n_total_workers, n_unemployed):
+        """Immigration can probably be simulated in a sophisticated
+        manner.  For now I just do it as a probability of people
+        moving in or out based on the job situation.
+
+        """
+        n_people_move_in = round(utils.global_state['immigration_max_weekly']
+                                 * (2*expit(0.1*wage)))
+        print('handle_immigration:', wage,
+              ' -- ', n_people_move_in)
+        if n_people_move_in > 0:
+            for i in range(n_people_move_in):
+                WorkerStatus.DOCUMENTED = True if random.random() < 0.7 else False
+                self.grid.place_agent(Worker, Worker.get_coords())
+                print('NEW_AGENT:', Worker.unique_id)
+        print(f'GET_STUFF_AFTER_IMMIGRATION_{self.steps}:'
+              + f' tot: {get_total_workers(self)} - employed:'
+              + f' {get_total_employed(self)} docu: {get_total_documented(self)}')
         
 
 class ICE_officer(AgriModelAgent):
