@@ -22,19 +22,12 @@ due to any of these factors:
 * Mass deportation
 * Large scale strikes
 
-Other factors that could be interesting but we are not looking at now:
-
-* Large scale military draft
-* Epidemics
 
 ## Agent design
 
-One can think of agents and "reservoirs".
-
-Agents have state for several individual instances, like a person, an
-institutional office, a business location (farm or factory).  They are
-sensitive to coming "close" to another agent and can interact.  The
-closeness can be geographical, or it could be a "network" closeness.
+Agents respond to wages, which are set by the firm according to
+the amount of labor needed and the number of workers available to
+complete this work. 
 
 Reservoirs have global state, like economic indicators or other
 parameters that we do not model as interacting individuals.
@@ -53,11 +46,11 @@ pip3 install networkx matplotlib
 
 ## Running and visualizing the model
 
-For now the model that is somewhat complete is `labor_farm_worker.py`
+For now the model that is somewhat complete is `farm_worker_agent.py`
 and you can run its visualization with:
 
 ```sh
-solara run labor_farm_worker_vis.py
+solara run farm_labor_app.py
 ```
 
 NOTE: so far (2025-11-14) the labor_farm_worker model and visualization
@@ -66,9 +59,6 @@ Below are some notes on parts that are not yet fleshed out.
 
 ## the files that implement the models
 
-`labor_county.py` - CountyModel
-
-labor_deportation.py
 
 `labor_farm.py`
 : Farm - a collection of fields, each field representing a grid

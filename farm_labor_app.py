@@ -15,12 +15,12 @@ from mesa.visualization.components import AgentPortrayalStyle
 
 # ICE_color = "#023098"
 ICE_color = "red"
+wage_color = "gold"
 
 agent_colors = {
     WorkerStatus.DOCUMENTED: "#4C753B",
     WorkerStatus.UNDOCUMENTED: "#D18049",
-    WorkerStatus.DEPORTED: "#110311",
-    WorkerStatus.WAGE: "gold",
+    WorkerStatus.DEPORTED: "#110311"
 }
 
 def worker_or_officer_portrayal(agent):
@@ -58,9 +58,13 @@ model_params = {
     "ICE_vision" : Slider("ICE Vison", 3, 1, 10, 1),
 }
 
-chart_component = make_plot_component(
+chart_component_workers = make_plot_component(
     {status.name.lower(): agent_colors[status] for status in WorkerStatus}
 )
+chart_component_wages = make_plot_component(
+    {"wage": wage_color}
+)
+
 
 agricultural_model = agricultural_model()
 renderer = SpaceRenderer(agricultural_model, backend="matplotlib")
@@ -70,7 +74,8 @@ renderer.post_process = post_process
 page = SolaraViz(
     agricultural_model, 
     renderer,
-    components=[chart_component],
+    components=[chart_component_workers,
+                chart_component_wages],
     model_params=model_params,
     name="Agricultural Agents in a Dynamic Model",
 )

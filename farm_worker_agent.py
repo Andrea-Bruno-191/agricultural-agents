@@ -14,7 +14,7 @@ class WorkerStatus(Enum):
     DOCUMENTED = 1
     UNDOCUMENTED = 2
     DEPORTED = 3
-    WAGE = 4
+
 
 def calc_n_deported(model):
     n_deported = 0
