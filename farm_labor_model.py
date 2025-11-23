@@ -12,6 +12,8 @@ import math
 import numpy as np
 import random
 import mesa
+from scipy.special import expit
+
 from mesa import Model
 from mesa.datacollection import DataCollector
 from mesa.discrete_space import OrthogonalMooreGrid
@@ -33,7 +35,7 @@ class AgriculturalModel(Model):
         self,
         width = 20, height = 20,
         worker_density = 0.4, ICE_density = 0.02,
-        ICE_agent_vision = 3, Worker_vision = 3,
+        ICE_agent_vision = 3,
         #ICE agent vision is a simulacrum for how aggressive immigration
         #policy is. This defines how they move. 
         movement=True, seed=None,
@@ -53,6 +55,7 @@ class AgriculturalModel(Model):
         # n_avail is the number of people available to do work
         self.n_avail = round(width*height*worker_density)
         self.wage_baseline = wage_baseline
+        self.deport_history = []
         # self.wage = calc_wage(self.current_year,
         #                       self.current_month, '96099',
         #                       self.n_avail, self.wage_baseline)
@@ -93,10 +96,10 @@ class AgriculturalModel(Model):
             #to the density. 
             print('this_klass:', klass)
             if klass == ICE_Officer:
-                new_ICE_Officer = ICE_Officer(self, 1)
+                new_ICE_Officer = ICE_Officer(self, ICE_agent_vision)
                 new_ICE_Officer.move_to(cell)
             elif klass == Worker:
-                new_worker = Worker(self, 3)
+                new_worker = Worker(self)
                 new_worker.move_to(cell)
 
         #We're done with setup, let's kick it off! 
@@ -106,11 +109,7 @@ class AgriculturalModel(Model):
         # stuff. 
         self.running = True
         self._update_counts()
-        print("====================================================")
-        print(self.datacollector)
         self.datacollector.collect(self)
-
-        print('agricultural model init')
 
     def step(self):
         """Standard mesa step function: 
@@ -120,14 +119,16 @@ class AgriculturalModel(Model):
         """
         print("MODEL: step")
         self.agents.shuffle_do("step")
+        self.handle_removals()
+        self.handle_immigration()
         self._update_counts()
         self.datacollector.collect(self)
+        self.wage = calc_wage(self) 
 
         self.current_month = self.current_month + 1
         if self.current_month > 12:
             self.current_month = 1
             self.current_year += 1
-        print(self.current_year, self.current_month)
 
         #Stops us from running forever. 
         if self.steps > self.max_iters:
@@ -138,8 +139,52 @@ class AgriculturalModel(Model):
         possible states defined in WorkerStatus: DOCUMENTED, UNDOCUMENTED,
         DEPORTED
         """
-        print('--> bytype:', self.agents_by_type[Worker])
-        print('--> bytype:', dir(self.agents_by_type[Worker]))
         counts = self.agents_by_type[Worker].groupby("status").count()
+        if not WorkerStatus.DEPORTED in counts: 
+            counts[WorkerStatus.DEPORTED] = 0
         for status in WorkerStatus:
             setattr(self, status.name, counts.get(status, 0))
+        #Update the history of how many workers got deported each month in the
+        #last 12 months. 
+        self.deport_history.append(counts[WorkerStatus.DEPORTED])
+        if len(self.deport_history) > 12: 
+            del self.deport_history[0]
+        if len(self.deport_history) == 0: 
+            self.deport_monthly_average = 0
+        else: 
+            self.deport_monthly_average = sum(self.deport_history) / len(self.deport_history)
+
+
+    def handle_removals(self):
+        """Helper function which removes agents with the 'deported' status
+        from the model."""
+        removal_list = []
+        deportation_list = []
+        for a in self.agents: 
+
+            #first prepare the list to be deported
+            if isinstance(a, Worker) and a.status == WorkerStatus.DEPORTED:
+                print('REMOVE_WORKER_AGENT:', a.unique_id)
+                deportation_list.append(a)
+        for a in deportation_list: 
+            a.remove()
+            print("Just_removed_agent:", a.unique_id, "remaining:",
+                  len(self.agents))
+        self.n_avail = len(self.agents)
+
+    def handle_immigration(self):
+        """This method introduces new worker agents into our community, 
+        based on the current wage being offered."""
+        monthly_cap = 10 #not yet sophisticated
+        mobility_factor = .05
+        sigmoid_arg = (self.wage - wage_baseline) * mobility_factor 
+        incoming_prob = expit(sigmoid_arg)
+        n_incoming = round(monthly_cap * incoming_prob)
+        print("IMMIGRATION: prob, incoming:", incoming_prob, n_incoming)
+        for i in range(n_incoming):
+            new_worker = Worker(self)
+            new_worker.move_to(self.grid.empties.cells[0])
+            print("NEW_WORKER:", new_worker.unique_id, new_worker.pos)
+            #assert(self.grid.exists_empty_cells())
+            #cell = self.grid.select_cells(only_empty = True)[0]
+            #self.grid.place_agent(worker)

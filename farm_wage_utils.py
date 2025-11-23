@@ -6,8 +6,8 @@ season, geographical region, and worker availability.
 """
 
 
-agri_month2work_needed = {1: 27, 2: 33, 3: 33, 4: 33, 5: 33, 6: 33, 7: 33, 8: 33,
-                          9: 33, 10: 40, 11: 41, 12: 33}
+agri_month2work_needed = {1: 35, 2: 35, 3: 34, 4: 42, 5: 47, 6: 47, 7: 44, 8: 45,
+                          9: 44, 10: 43, 11: 39, 12: 35}
 wage_baseline = 17
 
 # def get_current_wage(model):
@@ -18,9 +18,13 @@ wage_baseline = 17
 def calc_wage(model):
     """Simplified model of wage, uses the agri_month2work_needed table."""
     # work_needed = agri_month2work_needed[month]
-    wage = model.wage_baseline * get_employment_capacity(model.current_year, model.current_month) / model.n_avail 
-    """how many workers we have? should change the work_needed table to be close ##to number of worker agents typically in model"""
+    wage = model.wage_baseline * get_employment_capacity(model.current_year, model.current_month) / (model.n_avail / 4) 
     return wage
 
 def get_employment_capacity(year, month):
     return agri_month2work_needed[month]
+
+#def calc_wage_threshold():
+#    random.randint(1, 100)
+#    return wage_threshold
+    

@@ -11,6 +11,7 @@ These will typically be created by methods in a model object.
 import math
 from enum import Enum
 import mesa
+from scipy.special import expit
 
 import random
 
@@ -72,7 +73,7 @@ class AgriModelAgent(mesa.discrete_space.CellAgent):
 class Worker(AgriModelAgent):
     """Worker agent - derives from AgriModelAgent and adds to it a 
     representation of fear, immigration status, and wage threshold."""
-    def __init__(self, model, fear):
+    def __init__(self, model):
         """Create a new worker.
         Self.wage is the exogenous wage offered by firms, dependent
         on the amount of work needed and the number of workers available.
@@ -84,7 +85,9 @@ class Worker(AgriModelAgent):
         super().__init__(model)
         # 
         self.model = model
-        self.status = WorkerStatus.DOCUMENTED if random.random() < 0.6 else WorkerStatus.UNDOCUMENTED
+        wage_positivity = self.model.wage - self.model.wage_baseline
+        prob_documented = expit(wage_positivity) 
+        self.status = WorkerStatus.DOCUMENTED if random.random() < prob_documented else WorkerStatus.UNDOCUMENTED
         self.fear = 1.0 + 0.1 * (2 * random.random() - 1) 
         #wage_threshold is the lowest wage an agent will accept
         #before leaving the country. Initial value is set to 
@@ -117,28 +120,6 @@ class Worker(AgriModelAgent):
         self.vision = 1 
         self.update_neighbors()
         self.move()
-
-    def handle_immigration(self, n_employed, n_jobs_offered,
-                           n_total_workers, n_unemployed):
-        """Note: not yet in use! Will soon represent agents moving into the 
-        USA. Immigration can probably be simulated in a sophisticated
-        manner.  For now I just do it as a probability of people
-        moving in or out based on the job situation.
-
-        """
-        n_people_move_in = round(utils.global_state['immigration_max_weekly']
-                                 * (2*expit(0.1*wage)))
-        print('handle_immigration:', wage,
-              ' -- ', n_people_move_in)
-        if n_people_move_in > 0:
-            for i in range(n_people_move_in):
-                WorkerStatus.DOCUMENTED = True if random.random() < 0.7 else False
-                self.grid.place_agent(Worker, Worker.get_coords())
-                print('NEW_AGENT:', Worker.unique_id)
-        print(f'GET_STUFF_AFTER_IMMIGRATION_{self.steps}:'
-              + f' tot: {get_total_workers(self)} - employed:'
-              + f' {get_total_employed(self)} docu: {get_total_documented(self)}')
-
 
 class ICE_Officer(AgriModelAgent):
     def __init__(self, model, vision):
