@@ -34,7 +34,7 @@ from farm_worker_agent import (
 from farm_wage_utils import calc_wage
 from farm_labor_model import AgriculturalModel
 
-ICE_color = "#DD5A4C"
+ICE_color = "#698EBE"
 wage_color = "gold"
 
 
@@ -44,7 +44,8 @@ wage_color = "gold"
 agent_colors = {
     WorkerStatus.DOCUMENTED: "#4C753B", #greenish
     WorkerStatus.UNDOCUMENTED: "#D18049", #orangeish
-    WorkerStatus.DEPORTED: "#110311" #black 
+    WorkerStatus.DEPORTED: "#110311", #black 
+    WorkerStatus.DOCUMENTED_LEAVING: "grey"
 }
 
 def worker_or_officer_portrayal(agent):

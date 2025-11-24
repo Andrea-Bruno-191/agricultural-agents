@@ -22,11 +22,12 @@ class WorkerStatus(Enum):
     DOCUMENTED = 1
     UNDOCUMENTED = 2
     DEPORTED = 3
+    DOCUMENTED_LEAVING = 4
 
 #
 def calc_n_deported(model):
     n_deported = 0
-    print(len(model.agents_by_type[Worker]))
+    #print(len(model.agents_by_type[Worker]))
     for agent in model.agents_by_type[Worker]:
         # print("THIS_AGENT:", agent.unique_id, agent.status)
         if agent.status == WorkerStatus.DEPORTED:
@@ -37,7 +38,7 @@ def calc_n_deported(model):
 #workers are in each status. 
 def calc_n_undocumented(model):
     n_undocumented = 0
-    print(len(model.agents_by_type[Worker]))
+    #print(len(model.agents_by_type[Worker]))
     for agent in model.agents_by_type[Worker]:
         # print("THIS_AGENT:", agent.unique_id, agent.status)
         if agent.status == WorkerStatus.UNDOCUMENTED:
@@ -46,7 +47,7 @@ def calc_n_undocumented(model):
 
 def calc_n_workers(model):
     n_workers = 0
-    print(len(model.agents_by_type[Worker]))
+    #print(len(model.agents_by_type[Worker]))
     for agent in model.agents_by_type[Worker]:
         # print("THIS_AGENT:", agent.unique_id, agent.status)
         if agent.status != WorkerStatus.DEPORTED:
@@ -85,8 +86,10 @@ class Worker(AgriModelAgent):
         super().__init__(model)
         # 
         self.model = model
+        wage_positivity_factor = 0.05
         wage_positivity = self.model.wage - self.model.wage_baseline
-        prob_documented = expit(wage_positivity) 
+
+        prob_documented = expit(wage_positivity * wage_positivity_factor) 
         self.status = WorkerStatus.DOCUMENTED if random.random() < prob_documented else WorkerStatus.UNDOCUMENTED
         self.fear = 1.0 + 0.1 * (2 * random.random() - 1) 
         #wage_threshold is the lowest wage an agent will accept
@@ -94,32 +97,49 @@ class Worker(AgriModelAgent):
         #wage baseline in the model. 
         self.wage_threshold = self.model.wage_baseline 
         self.empty_neighbors = []
+        self.choose_if_I_leave_documented()
+        self.choose_if_I_leave_undocumented()
 
     def step(self):
         """Update fear and wage threshold,
         decide whether to leave or stay in the USA."""
-        if self.wage_threshold >= self.model.wage:
-            self.state = WorkerStatus.DEPORTED
-        # Aim to make this fluctuate around 1
-        n_deported = calc_n_deported(self.model)
-        n_undocumented = calc_n_undocumented(self.model)
-        #Now calculate the fear factor. The algorithm is rudimentary
-        #and will be further refined. Right now: 
-        #If I'm documented, fear = 0
-        #If I'm undocumented, it depends on the ratio of deportations
-        #to other undocumented immigrants. 
-        #Prevents from dividing by zero! 
+        #Now handle if this agent wants to leave. This will
+        #be different if they're documented, based on wages, 
+        #or undocumented, based on fear and wages. 
         if self.status == WorkerStatus.DOCUMENTED: 
-            self.fear = 0 
-        elif n_undocumented == 0:
-            self.fear = 0
-        else:
-            self.fear = self.fear * (.8 + n_deported / n_undocumented)
-        # Should fluctuate but generally increase
+            self.choose_if_I_leave_documented()
+        elif self.status == WorkerStatus.UNDOCUMENTED:
+            self.choose_if_I_leave_undocumented()
+
         self.wage_threshold = self.wage_threshold * self.fear
         self.vision = 1 
         self.update_neighbors()
         self.move()
+
+    def choose_if_I_leave_documented(self):
+        """A documented worker will leave if they are not paid enough.
+    Another factor is the overall climate regarding immigrants,
+    represented by ICE aggression."""
+        leaving_mobility_factor = 0.5
+        sigmoid_arg = (self.model.wage_baseline - self.model.wage -2) * leaving_mobility_factor
+        outgoing_prob = expit(sigmoid_arg)
+        print("DOC_OUT: Wage, wage_baseline:", self.model.wage, 
+        self.model.wage_baseline)
+        print("DOC_OUT: prob, outgoing:", outgoing_prob)
+        if random.random() < outgoing_prob: 
+            self.status = WorkerStatus.DOCUMENTED_LEAVING
+            print("DOC_OUT: GONEZO")
+
+    def choose_if_I_leave_undocumented(self): 
+        if self.wage_threshold >= self.model.wage:
+            self.state = WorkerStatus.DEPORTED
+        n_deported = calc_n_deported(self.model)
+        n_undocumented = calc_n_undocumented(self.model)
+        if n_undocumented == 0: 
+            self.fear = 0
+        else:
+            self.fear = self.fear * (.8 + n_deported / n_undocumented)
+
 
 class ICE_Officer(AgriModelAgent):
     def __init__(self, model, vision):

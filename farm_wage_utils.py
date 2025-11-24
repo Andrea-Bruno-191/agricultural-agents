@@ -18,7 +18,7 @@ wage_baseline = 17
 def calc_wage(model):
     """Simplified model of wage, uses the agri_month2work_needed table."""
     # work_needed = agri_month2work_needed[month]
-    wage = model.wage_baseline * get_employment_capacity(model.current_year, model.current_month) / (model.n_avail / 4) 
+    wage = model.wage_baseline * get_employment_capacity(model.current_year, model.current_month) / (0.2 * model.n_avail) 
     return wage
 
 def get_employment_capacity(year, month):
@@ -26,5 +26,5 @@ def get_employment_capacity(year, month):
 
 #def calc_wage_threshold():
 #    random.randint(1, 100)
-#    return wage_threshold
+#    return wage_threshold ok 
     

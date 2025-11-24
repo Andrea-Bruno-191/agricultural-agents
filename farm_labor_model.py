@@ -72,6 +72,7 @@ class AgriculturalModel(Model):
             "documented": WorkerStatus.DOCUMENTED.name,
             "undocumented": WorkerStatus.UNDOCUMENTED.name,
             "deported": WorkerStatus.DEPORTED.name,
+            "documented_leaving": WorkerStatus.DOCUMENTED_LEAVING.name,
             "wage": calc_wage,
         }
 
@@ -163,12 +164,13 @@ class AgriculturalModel(Model):
         for a in self.agents: 
 
             #first prepare the list to be deported
-            if isinstance(a, Worker) and a.status == WorkerStatus.DEPORTED:
-                print('REMOVE_WORKER_AGENT:', a.unique_id)
+            if isinstance(a, Worker) and (a.status == WorkerStatus.DEPORTED 
+                                        or a.status == WorkerStatus.DOCUMENTED_LEAVING):
+                #print('REMOVE_WORKER_AGENT:', a.unique_id)
                 deportation_list.append(a)
         for a in deportation_list: 
             a.remove()
-            print("Just_removed_agent:", a.unique_id, "remaining:",
+            print("Just_removed_agent:", a.unique_id, a.status, "remaining:",
                   len(self.agents))
         self.n_avail = len(self.agents)
 
@@ -188,3 +190,5 @@ class AgriculturalModel(Model):
             #assert(self.grid.exists_empty_cells())
             #cell = self.grid.select_cells(only_empty = True)[0]
             #self.grid.place_agent(worker)
+
+
