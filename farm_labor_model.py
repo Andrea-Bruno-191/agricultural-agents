@@ -50,12 +50,14 @@ class AgriculturalModel(Model):
         # current month is the global date, all agents are put in 
         self.current_month = 1
         self.current_year = 2022
+        self.ICE_agent_vision = ICE_agent_vision
         self.movement = movement
         self.max_iters = max_iters
         # n_avail is the number of people available to do work
         self.n_avail = round(width*height*worker_density)
         self.wage_baseline = wage_baseline
         self.deport_history = []
+        self.deport_monthly_average = 0
         # self.wage = calc_wage(self.current_year,
         #                       self.current_month, '96099',
         #                       self.n_avail, self.wage_baseline)
@@ -97,7 +99,7 @@ class AgriculturalModel(Model):
             #to the density. 
             print('this_klass:', klass)
             if klass == ICE_Officer:
-                new_ICE_Officer = ICE_Officer(self, ICE_agent_vision)
+                new_ICE_Officer = ICE_Officer(self)
                 new_ICE_Officer.move_to(cell)
             elif klass == Worker:
                 new_worker = Worker(self)
@@ -170,8 +172,8 @@ class AgriculturalModel(Model):
                 deportation_list.append(a)
         for a in deportation_list: 
             a.remove()
-            print("Just_removed_agent:", a.unique_id, a.status, "remaining:",
-                  len(self.agents))
+            #print("Just_removed_agent:", a.unique_id, a.status, "remaining:",
+                  #len(self.agents))
         self.n_avail = len(self.agents)
 
     def handle_immigration(self):
@@ -182,7 +184,7 @@ class AgriculturalModel(Model):
         sigmoid_arg = (self.wage - wage_baseline) * mobility_factor 
         incoming_prob = expit(sigmoid_arg)
         n_incoming = round(monthly_cap * incoming_prob)
-        print("IMMIGRATION: prob, incoming:", incoming_prob, n_incoming)
+        #print("IMMIGRATION: prob, incoming:", incoming_prob, n_incoming)
         for i in range(n_incoming):
             new_worker = Worker(self)
             new_worker.move_to(self.grid.empties.cells[0])

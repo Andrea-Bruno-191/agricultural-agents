@@ -61,7 +61,7 @@ class AgriModelAgent(mesa.discrete_space.CellAgent):
     def update_neighbors(self):
         """If I've moved or if my vision has changed, I'll need to 
         recalculate my neighborhood!"""
-        self.neighborhood = self.cell.get_neighborhood(radius=self.vision)
+        self.neighborhood = self.cell.get_neighborhood(radius=self.model.ICE_agent_vision)
         self.neighbors = self.neighborhood.agents
         self.empty_neighbors = [c for c in self.neighborhood if c.is_empty]
 
@@ -86,6 +86,7 @@ class Worker(AgriModelAgent):
         super().__init__(model)
         # 
         self.model = model
+        print("WORKER_CREATION_MODEL:", self.model, dir(self.model))
         wage_positivity_factor = 0.05
         wage_positivity = self.model.wage - self.model.wage_baseline
 
@@ -112,7 +113,6 @@ class Worker(AgriModelAgent):
             self.choose_if_I_leave_undocumented()
 
         self.wage_threshold = self.wage_threshold * self.fear
-        self.vision = 1 
         self.update_neighbors()
         self.move()
 
@@ -138,16 +138,16 @@ class Worker(AgriModelAgent):
         if n_undocumented == 0: 
             self.fear = 0
         else:
-            self.fear = self.fear * (.8 + n_deported / n_undocumented)
+            print('SELF_MODEL_DIR:', dir(self.model))
+            self.fear = self.fear * (.8 + self.model.deport_monthly_average / n_undocumented)
 
 
 class ICE_Officer(AgriModelAgent):
-    def __init__(self, model, vision):
+    def __init__(self, model):
         """Main argument is "vison" which is how far from my cell do
         I look to try to find immigrants. A sort of radius which is 
         correlated with enforcement aggressiveness."""
         super().__init__(model)
-        self.vision = vision
         self.undocumented_neighbors = []
 
     def step(self):
