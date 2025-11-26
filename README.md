@@ -6,7 +6,7 @@ If you have *already* done the initial python setup then you can
 simply run these instructions:
 
 ```sh
-source farm-labor-venv/bin/activate
+source abm-mesa-venv/bin/activate
 solara run farm_labor_app.py
 ```
 
